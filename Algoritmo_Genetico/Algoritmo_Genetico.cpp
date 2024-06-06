@@ -219,5 +219,6 @@ int main() {
         cout << (melhorRota.back() + 1) << " -> " << (melhorRota[0] + 1) << " (" << problemas[i][melhorRota.back()][melhorRota[0]] << ")" << endl;
     }
 
+    system("pause");
     return 0;
 }
