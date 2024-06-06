@@ -11,6 +11,8 @@
 
 using namespace std;
 
+const int MAX_CIDADES = 20;  // Definindo o número máximo de cidades
+
 // Função para ler o arquivo de entrada e transformar os dados em matrizes de distâncias
 vector<vector<vector<int>>> lerArquivo(const string& nomeArquivo) {
     ifstream file(nomeArquivo); // Abre o arquivo para leitura
@@ -28,6 +30,13 @@ vector<vector<vector<int>>> lerArquivo(const string& nomeArquivo) {
         }
 
         int n_cidades = dados[0]; // Número de cidades
+
+        // Verificação do número máximo de cidades
+        if (n_cidades > MAX_CIDADES) {
+            cerr << "Erro: Número de cidades (" << n_cidades << ") excede o máximo permitido (" << MAX_CIDADES << ")." << endl;
+            exit(EXIT_FAILURE);
+        }
+
         vector<vector<int>> matrizDistancias(n_cidades, vector<int>(n_cidades, 0)); // Matriz de distâncias
         int k = 1;
         for (int i = 0; i < n_cidades; ++i) {
@@ -98,7 +107,7 @@ void mutacao(vector<int>& rota, double taxaMutacao) {
     for (size_t i = 0; i < rota.size(); ++i) {
         if (((double)rand() / RAND_MAX) < taxaMutacao) {
             int j = rand() % rota.size();
-            swap(rota[i], rota[j]);
+            swap(rota[i], rota[j]); // Troca as posições de dois genes
         }
     }
 }
