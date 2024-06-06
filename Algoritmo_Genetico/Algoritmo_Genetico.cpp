@@ -7,6 +7,7 @@
 #include <random>
 #include <ctime>
 #include <climits>
+#include <locale.h>
 
 using namespace std;
 
@@ -119,12 +120,15 @@ vector<int> selecaoTorneio(const vector<vector<int>>& populacao, const vector<ve
     return melhor;
 }
 
-// Função principal do Algoritmo Genético
-pair<vector<int>, int> algoritmoGenetico(const vector<vector<int>>& matrizDistancias, int tamanhoPopulacao = 100, int numeroGeracoes = 500, double taxaMutacao = 0.01, int tamanhoTorneio = 5) {
+// Função principal do Algoritmo Genético com critério de parada por estabilidade
+pair<vector<int>, int> algoritmoGenetico(const vector<vector<int>>& matrizDistancias, int tamanhoPopulacao = 100, int maxGeracoes = 500, double taxaMutacao = 0.01, int tamanhoTorneio = 5, int criterioEstabilidade = 50) {
     int n_cidades = matrizDistancias.size();
     vector<vector<int>> populacao = criarPopulacaoInicial(tamanhoPopulacao, n_cidades);
 
-    for (int geracao = 0; geracao < numeroGeracoes; ++geracao) {
+    int geracoesSemMelhoria = 0;
+    int melhorDistanciaAnterior = INT_MAX;
+
+    for (int geracao = 0; geracao < maxGeracoes; ++geracao) {
         vector<vector<int>> novaPopulacao(tamanhoPopulacao);
 
         // Gera uma nova população através de cruzamento e mutação
@@ -136,23 +140,52 @@ pair<vector<int>, int> algoritmoGenetico(const vector<vector<int>>& matrizDistan
             novaPopulacao[i] = filho;
         }
         populacao = novaPopulacao;
+
+        // Encontra a melhor rota na população atual
+        vector<int> melhorRotaAtual;
+        int melhorDistanciaAtual = INT_MAX;
+
+        for (const auto& rota : populacao) {
+            int distancia = calcularDistanciaTotal(rota, matrizDistancias);
+            if (distancia < melhorDistanciaAtual) {
+                melhorRotaAtual = rota;
+                melhorDistanciaAtual = distancia;
+            }
+        }
+
+        // Verifica se a melhor distância melhorou
+        if (melhorDistanciaAtual < melhorDistanciaAnterior) {
+            melhorDistanciaAnterior = melhorDistanciaAtual;
+            geracoesSemMelhoria = 0;
+        }
+        else {
+            geracoesSemMelhoria++;
+        }
+
+        // Critério de parada por estabilidade
+        if (geracoesSemMelhoria >= criterioEstabilidade) {
+            cout << "Parando devido à estabilidade nos resultados após " << geracoesSemMelhoria << " gerações." << endl;
+            break;
+        }
     }
 
     // Encontra a melhor rota na população final
-    vector<int> melhorRota;
-    int melhorDistancia = INT_MAX;
+    vector<int> melhorRotaFinal;
+    int melhorDistanciaFinal = INT_MAX;
 
     for (const auto& rota : populacao) {
         int distancia = calcularDistanciaTotal(rota, matrizDistancias);
-        if (distancia < melhorDistancia) {
-            melhorRota = rota;
-            melhorDistancia = distancia;
+        if (distancia < melhorDistanciaFinal) {
+            melhorRotaFinal = rota;
+            melhorDistanciaFinal = distancia;
         }
     }
-    return make_pair(melhorRota, melhorDistancia);
+    return make_pair(melhorRotaFinal, melhorDistanciaFinal);
 }
 
 int main() {
+    setlocale(LC_ALL, ""); // Configura a localidade para o ambiente padrão do sistema
+
     srand(time(0));
 
     string nomeArquivo = "instrucoes.txt"; // Altere para o caminho correto do seu arquivo de entrada
