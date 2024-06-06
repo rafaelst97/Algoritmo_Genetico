@@ -12,21 +12,22 @@ using namespace std;
 
 // Função para ler o arquivo de entrada e transformar os dados em matrizes de distâncias
 vector<vector<vector<int>>> lerArquivo(const string& nomeArquivo) {
-    ifstream file(nomeArquivo);
-    vector<vector<vector<int>>> problemas;
-    string line;
+    ifstream file(nomeArquivo); // Abre o arquivo para leitura
+    vector<vector<vector<int>>> problemas; // Vetor para armazenar os problemas
+    string line; // Variável para armazenar cada linha do arquivo
 
-    while (getline(file, line)) {
-        stringstream ss(line);
-        string item;
-        vector<int> dados;
+    while (getline(file, line)) { // Lê cada linha do arquivo
+        stringstream ss(line); // Cria um stream a partir da linha
+        string item; // Variável para armazenar cada item da linha
+        vector<int> dados; // Vetor para armazenar os dados da linha
 
+        // Separa os itens da linha por ';' e converte para inteiro
         while (getline(ss, item, ';')) {
             dados.push_back(stoi(item));
         }
 
-        int n_cidades = dados[0];
-        vector<vector<int>> matrizDistancias(n_cidades, vector<int>(n_cidades, 0));
+        int n_cidades = dados[0]; // Número de cidades
+        vector<vector<int>> matrizDistancias(n_cidades, vector<int>(n_cidades, 0)); // Matriz de distâncias
         int k = 1;
         for (int i = 0; i < n_cidades; ++i) {
             for (int j = i + 1; j < n_cidades; ++j) {
@@ -35,12 +36,12 @@ vector<vector<vector<int>>> lerArquivo(const string& nomeArquivo) {
                 ++k;
             }
         }
-        problemas.push_back(matrizDistancias);
+        problemas.push_back(matrizDistancias); // Adiciona a matriz de distâncias aos problemas
     }
     return problemas;
 }
 
-// Função para calcular a aptidão de uma rota
+// Função para calcular a distância total de uma rota
 int calcularDistanciaTotal(const vector<int>& rota, const vector<vector<int>>& matrizDistancias) {
     int distanciaTotal = 0;
     for (size_t i = 0; i < rota.size() - 1; ++i) {
@@ -50,7 +51,7 @@ int calcularDistanciaTotal(const vector<int>& rota, const vector<vector<int>>& m
     return distanciaTotal;
 }
 
-// Função para criar a população inicial
+// Função para criar a população inicial de rotas
 vector<vector<int>> criarPopulacaoInicial(int tamanhoPopulacao, int n_cidades) {
     vector<vector<int>> populacao(tamanhoPopulacao, vector<int>(n_cidades));
     vector<int> rota(n_cidades);
@@ -58,6 +59,7 @@ vector<vector<int>> criarPopulacaoInicial(int tamanhoPopulacao, int n_cidades) {
         rota[i] = i; // Inicializa a rota com os índices das cidades
     }
 
+    // Cria uma população de rotas aleatórias
     for (int i = 0; i < tamanhoPopulacao; ++i) {
         shuffle(rota.begin(), rota.end(), mt19937(random_device()()));
         populacao[i] = rota;
@@ -72,10 +74,12 @@ vector<int> crossover(const vector<int>& pai1, const vector<int>& pai2) {
     int inicio = rand() % tamanho;
     int fim = inicio + (rand() % (tamanho - inicio));
 
+    // Copia uma parte do primeiro pai para o filho
     for (int i = inicio; i <= fim; ++i) {
         filho[i] = pai1[i];
     }
 
+    // Preenche o restante do filho com os genes do segundo pai
     int pos = 0;
     for (int i = 0; i < tamanho; ++i) {
         if (find(filho.begin(), filho.end(), pai2[i]) == filho.end()) {
@@ -88,7 +92,7 @@ vector<int> crossover(const vector<int>& pai1, const vector<int>& pai2) {
     return filho;
 }
 
-// Função para realizar mutação em uma rota
+// Função para realizar a mutação em uma rota
 void mutacao(vector<int>& rota, double taxaMutacao) {
     for (size_t i = 0; i < rota.size(); ++i) {
         if (((double)rand() / RAND_MAX) < taxaMutacao) {
@@ -98,11 +102,12 @@ void mutacao(vector<int>& rota, double taxaMutacao) {
     }
 }
 
-// Função para selecionar os melhores pais
+// Função para selecionar os melhores pais através de torneio
 vector<int> selecaoTorneio(const vector<vector<int>>& populacao, const vector<vector<int>>& matrizDistancias, int tamanhoTorneio) {
     vector<int> melhor;
     int melhorDistancia = INT_MAX;
 
+    // Seleciona os melhores indivíduos em um torneio
     for (int i = 0; i < tamanhoTorneio; ++i) {
         const vector<int>& individuo = populacao[rand() % populacao.size()];
         int distancia = calcularDistanciaTotal(individuo, matrizDistancias);
@@ -122,6 +127,7 @@ pair<vector<int>, int> algoritmoGenetico(const vector<vector<int>>& matrizDistan
     for (int geracao = 0; geracao < numeroGeracoes; ++geracao) {
         vector<vector<int>> novaPopulacao(tamanhoPopulacao);
 
+        // Gera uma nova população através de cruzamento e mutação
         for (int i = 0; i < tamanhoPopulacao; ++i) {
             vector<int> pai1 = selecaoTorneio(populacao, matrizDistancias, tamanhoTorneio);
             vector<int> pai2 = selecaoTorneio(populacao, matrizDistancias, tamanhoTorneio);
@@ -132,6 +138,7 @@ pair<vector<int>, int> algoritmoGenetico(const vector<vector<int>>& matrizDistan
         populacao = novaPopulacao;
     }
 
+    // Encontra a melhor rota na população final
     vector<int> melhorRota;
     int melhorDistancia = INT_MAX;
 
@@ -151,6 +158,7 @@ int main() {
     string nomeArquivo = "instrucoes.txt"; // Altere para o caminho correto do seu arquivo de entrada
     vector<vector<vector<int>>> problemas = lerArquivo(nomeArquivo);
 
+    // Para cada problema, executa o Algoritmo Genético e exibe a melhor rota encontrada
     for (size_t i = 0; i < problemas.size(); ++i) {
         pair<vector<int>, int> resultado = algoritmoGenetico(problemas[i]);
         vector<int> melhorRota = resultado.first;
